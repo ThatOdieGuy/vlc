@@ -34,6 +34,7 @@
 #include <vlc/libvlc_media_player.h>
 
 #include <vlc_common.h>
+#include <vlc_block.h>
 #include <vlc_input.h>
 #include <vlc_vout.h>
 
@@ -164,6 +165,63 @@ libvlc_video_take_snapshot( libvlc_media_player_t *p_mi, unsigned num,
     vlc_object_release( p_vout );
     return 0;
 }
+
+//Odie added
+size_t
+libvlc_video_take_snapshot_addr( libvlc_media_player_t *p_mi, unsigned num,
+                                 void **psz_addr, unsigned int i_width, 
+                                 unsigned int i_height )
+{
+    block_t *block_buffer;
+    size_t buffer_len = 0;
+    char *buffer = NULL;
+
+    vout_thread_t *p_vout = GetVout( p_mi, num );
+    if (p_vout == NULL)
+        return -1;
+
+	var_Create( p_vout, "snapshot-width", VLC_VAR_INTEGER );
+    var_SetInteger( p_vout, "snapshot-width", i_width);
+    var_Create( p_vout, "snapshot-height", VLC_VAR_INTEGER );    
+    var_SetInteger( p_vout, "snapshot-height", i_height );
+    var_Create( p_vout, "snapshot-format", VLC_VAR_STRING );    
+    var_SetString( p_vout, "snapshot-format", "png" );
+
+    var_TriggerCallback( p_vout, "video-snapshot-addr" );
+
+    block_buffer = (block_t *) var_GetAddress( p_vout, "snapshot-addr" );
+    msg_Dbg (p_vout, "Odie 1");
+
+    if( block_buffer == NULL )
+        return -1;
+
+    msg_Dbg (p_vout, "Odie 2");
+    
+    buffer_len = block_buffer->i_buffer;
+    if( buffer_len <= 0 )
+        return -1;
+
+    msg_Dbg (p_vout, "Odie 3");
+    
+    buffer = malloc( buffer_len );
+    if( buffer == NULL )
+        return -1;
+
+    msg_Dbg (p_vout, "Odie 4");
+
+    memcpy( buffer, block_buffer->p_buffer, buffer_len );
+
+    *psz_addr = buffer;
+    
+    msg_Dbg (p_vout, "Odie 5");
+    
+    var_TriggerCallback( p_vout, "video-snapshot-addr-free" );
+
+    msg_Dbg (p_vout, "Odie 6");
+    
+    return buffer_len;
+}
+
 
 int libvlc_video_get_size( libvlc_media_player_t *p_mi, unsigned num,
                            unsigned *restrict px, unsigned *restrict py )

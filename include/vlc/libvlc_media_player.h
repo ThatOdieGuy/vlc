@@ -1229,6 +1229,27 @@ LIBVLC_API
 int libvlc_video_take_snapshot( libvlc_media_player_t *p_mi, unsigned num,
                                 const char *psz_filepath, unsigned int i_width,
                                 unsigned int i_height );
+                                
+//Odie added                                
+/**
+ * Take a snapshot of the current video window and return the snapshot address.
+ *
+ * If i_width AND i_height is 0, original size is used.
+ * If i_width XOR i_height is 0, original aspect-ratio is preserved.
+ *
+ * \param p_mi media player instance
+ * \param num number of video output (typically 0 for the first/only one)
+ * \param psz_addr place to return the snapshot address (you MUST free it after use)
+ * \param i_width the snapshot's width
+ * \param i_height the snapshot's height
+ * \return the snapshot memory area size on success, -1 if there was a problem
+ */
+LIBVLC_API
+size_t libvlc_video_take_snapshot_addr( libvlc_media_player_t *p_mi, unsigned num,
+                                 void **psz_addr, unsigned int i_width, 
+                                 unsigned int i_height );
+
+                                
 
 /**
  * Enable or disable deinterlace filter

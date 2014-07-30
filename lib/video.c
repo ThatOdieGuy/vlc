@@ -180,7 +180,7 @@ libvlc_video_take_snapshot_addr( libvlc_media_player_t *p_mi, unsigned num,
     if (p_vout == NULL)
         return -1;
 
-	var_Create( p_vout, "snapshot-width", VLC_VAR_INTEGER );
+    var_Create( p_vout, "snapshot-width", VLC_VAR_INTEGER );
     var_SetInteger( p_vout, "snapshot-width", i_width);
     var_Create( p_vout, "snapshot-height", VLC_VAR_INTEGER );    
     var_SetInteger( p_vout, "snapshot-height", i_height );

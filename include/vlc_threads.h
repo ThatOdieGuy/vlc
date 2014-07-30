@@ -40,6 +40,11 @@
 #  define ETIMEDOUT 10060 /* This is the value in winsock.h. */
 # endif
 
+//Added by Odie. Visual Studio needs poll.h that we add through vlc-qt
+#if defined(_MSC_VER)
+#include <poll.h>
+#endif
+
 typedef struct vlc_thread *vlc_thread_t;
 typedef struct
 {

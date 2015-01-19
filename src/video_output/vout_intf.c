@@ -65,6 +65,12 @@ static int FullscreenCallback( vlc_object_t *, char const *,
                                vlc_value_t, vlc_value_t, void * );
 static int SnapshotCallback( vlc_object_t *, char const *,
                              vlc_value_t, vlc_value_t, void * );
+//Odie added
+static int SnapshotAddrCallback( vlc_object_t *p_this, char const *psz_cmd,
+                       vlc_value_t oldval, vlc_value_t newval, void *p_data );
+static int SnapshotAddrFreeCallback( vlc_object_t *p_this, char const *psz_cmd,
+                       vlc_value_t oldval, vlc_value_t newval, void *p_data );
+
 static int VideoFilterCallback( vlc_object_t *, char const *,
                                 vlc_value_t, vlc_value_t, void * );
 static int SubSourceCallback( vlc_object_t *, char const *,
@@ -291,6 +297,19 @@ void vout_IntfInit( vout_thread_t *p_vout )
     var_Change( p_vout, "video-snapshot", VLC_VAR_SETTEXT, &text, NULL );
     var_AddCallback( p_vout, "video-snapshot", SnapshotCallback, NULL );
 
+	//Odie added
+	/* Add a snapshot address variable */
+    var_Create( p_vout, "video-snapshot-addr", VLC_VAR_VOID | VLC_VAR_ISCOMMAND );
+    text.psz_string = _("Snapshot address");
+    var_Change( p_vout, "video-snapshot-addr", VLC_VAR_SETTEXT, &text, NULL );
+    var_AddCallback( p_vout, "video-snapshot-addr", SnapshotAddrCallback, NULL );
+
+    /* Add a free snapshot address variable */
+    var_Create( p_vout, "video-snapshot-addr-free", VLC_VAR_VOID | VLC_VAR_ISCOMMAND );
+    text.psz_string = _("Free snapshot address");
+    var_Change( p_vout, "video-snapshot-addr-free", VLC_VAR_SETTEXT, &text, NULL );
+    var_AddCallback( p_vout, "video-snapshot-addr-free", SnapshotAddrFreeCallback, NULL );
+
     /* Add a video-filter variable */
     var_Create( p_vout, "video-filter",
                 VLC_VAR_STRING | VLC_VAR_DOINHERIT | VLC_VAR_ISCOMMAND );
@@ -444,6 +463,80 @@ exit:
     free( psz_format );
     free( psz_path );
 }
+
+/*****************************************************************************
+ * Odie added - Screenshot to address
+ *****************************************************************************/
+
+/**
+ * This function will handle a snapshot request and provide the image pointer
+ */
+static void VoutSnapshotAddr( vout_thread_t *p_vout )
+{
+    char *psz_format = var_GetNonEmptyString( p_vout, "snapshot-format" );
+    char *psz_prefix = var_GetNonEmptyString( p_vout, "snapshot-prefix" );
+
+    /* */
+    picture_t *p_picture;
+    block_t *p_image;
+    video_format_t fmt;
+
+    /* 500ms timeout
+     * XXX it will cause trouble with low fps video (< 2fps) */
+    if( vout_GetSnapshot( p_vout, &p_image, &p_picture, &fmt, psz_format, 500*1000 ) )
+    {
+        p_picture = NULL;
+        p_image = NULL;
+        goto exit;
+    }
+
+	msg_Dbg( p_vout, "p_image addr: %i", p_image );
+	var_Create( p_vout, "snapshot-addr", VLC_VAR_ADDRESS );
+    var_SetAddress( p_vout, "snapshot-addr", (void *) p_image );
+
+exit:
+    if( p_picture )
+        picture_Release( p_picture );
+    free( psz_prefix );
+    free( psz_format );
+}
+
+/**
+ * This function will free the snapshot addr
+ */
+static void VoutSnapshotAddrFree( vout_thread_t *p_vout )
+{
+    block_t *p_image = NULL;
+
+    p_image = (block_t *) var_GetAddress( p_vout, "snapshot-addr" );
+
+    if( p_image != NULL )
+        block_Release( p_image );
+}
+
+static int SnapshotAddrCallback( vlc_object_t *p_this, char const *psz_cmd,
+                       vlc_value_t oldval, vlc_value_t newval, void *p_data )
+{
+    vout_thread_t *p_vout = (vout_thread_t *)p_this;
+    VLC_UNUSED(psz_cmd); VLC_UNUSED(oldval);
+    VLC_UNUSED(newval); VLC_UNUSED(p_data);
+
+    VoutSnapshotAddr( p_vout );
+    return VLC_SUCCESS;
+}
+
+static int SnapshotAddrFreeCallback( vlc_object_t *p_this, char const *psz_cmd,
+                       vlc_value_t oldval, vlc_value_t newval, void *p_data )
+{
+    vout_thread_t *p_vout = (vout_thread_t *)p_this;
+    VLC_UNUSED(psz_cmd); VLC_UNUSED(oldval);
+    VLC_UNUSED(newval); VLC_UNUSED(p_data);
+
+    VoutSnapshotAddrFree( p_vout );
+    return VLC_SUCCESS;
+}
+
+
 
 /*****************************************************************************
  * Handle filters

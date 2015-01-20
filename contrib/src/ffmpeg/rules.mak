@@ -5,8 +5,10 @@
 USE_FFMPEG ?= 1
 
 ifdef USE_FFMPEG
-HASH=2dcaa1b9d142ae113b28bffdbf7f8f8900b5e770
-FFMPEG_SNAPURL := http://git.videolan.org/?p=ffmpeg.git;a=snapshot;h=$(HASH);sf=tgz
+#HASH=2dcaa1b9d142ae113b28bffdbf7f8f8900b5e770
+#FFMPEG_SNAPURL := http://git.videolan.org/?p=ffmpeg.git;a=snapshot;h=$(HASH);sf=tgz
+HASH=2.2.11
+FFMPEG_SNAPURL := https://www.ffmpeg.org/releases/ffmpeg-2.2.11.tar.gz
 else
 HASH=d1f9563d502037239185c11578cc614bdf0c5870
 FFMPEG_SNAPURL := http://git.libav.org/?p=libav.git;a=snapshot;h=$(HASH);sf=tgz
